@@ -1,0 +1,45 @@
+pipeline {
+    agent {
+        label 'jenkins-docker-slave'
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
+            }
+        }
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    // Build Docker images
+                    sh 'docker-compose build'
+                }
+            }
+        }
+        stage('Test Application') {
+            steps {
+                script {
+                    // Run Docker Compose
+                    sh 'docker-compose up -d'
+                    
+                    // Add your test commands here, for example:
+                    sleep(30) // wait for the containers to start
+                    sh 'curl -f http://localhost:3000' // test Node.js app
+                    sh 'curl -f http://localhost' // test PHP app
+                }
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    // Log in to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                    }
+                    // Tag and push images
+                    sh 'docker-compose push'
+                }
+            }
+        }
+    }
+}
