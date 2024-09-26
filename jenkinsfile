@@ -1,72 +1,52 @@
 pipeline {
     agent {
-        label 'jenkins-docker-slave'
+        label 'jenkins-slave'
     }
     stages {
-        stage('Setup Workspace') {
-            steps {
-                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                    script {
-                        // Print the current working directory for debugging
-                        sh 'pwd'
-                    }
-                }
-            }
-        }
         stage('Checkout Code') {
             steps {
-                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                    git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
-                }
+                git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
             }
         }
         stage('Build Docker Images') {
             steps {
-                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                    script {
-                        // Build Docker images
-                        sh '/usr/local/bin/docker-compose build'
-                    }
+                script {
+                    // Build Docker images
+                    sh '/usr/local/bin/docker-compose build'
                 }
             }
         }
         stage('Test Application') {
             steps {
-                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                    script {
-                        // Run Docker Compose
-                        sh '/usr/local/bin/docker-compose up -d'
-                        
-                        // Add your test commands here
-                        sleep(30) // wait for the containers to start
-                        sh 'curl -f http://localhost:3000' // test Node.js app
-                        sh 'curl -f http://localhost' // test PHP app
-                    }
+                script {
+                    // Run Docker Compose
+                    sh '/usr/local/bin/docker-compose up -d'
+                    
+                    // Add your test commands here
+                    sleep(30) // wait for the containers to start
+                    sh 'curl -f http://localhost:3000' // test Node.js app
+                    sh 'curl -f http://localhost' // test PHP app
                 }
             }
         }
         stage('Push to Docker Hub') {
             steps {
-                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                    script {
-                        // Log in to Docker Hub
-                        withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                            sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
-                        }
-                        // Tag and push images
-                        sh '/usr/local/bin/docker-compose push'
+                script {
+                    // Log in to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
                     }
+                    // Tag and push images
+                    sh '/usr/local/bin/docker-compose push'
                 }
             }
         }
     }
     post {
         always {
-            // Clean up Docker containers after the pipeline run
-            ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
-                script {
-                    sh '/usr/local/bin/docker-compose down'
-                }
+            script {
+                // Clean up Docker containers after the pipeline run
+                sh '/usr/local/bin/docker-compose down'
             }
         }
     }
