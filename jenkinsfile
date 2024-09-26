@@ -1,8 +1,17 @@
 pipeline {
     agent {
         label 'jenkins-docker-slave'
+        customWorkspace '/home/jenkins-slave/workspace/super-app-pipeline'
     }
     stages {
+        stage('Debug Workspace') {
+            steps {
+                script {
+                    // Print the current working directory
+                    sh 'pwd'
+                }
+            }
+        }
         stage('Checkout Code') {
             steps {
                 git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
@@ -12,7 +21,7 @@ pipeline {
             steps {
                 script {
                     // Build Docker images
-                    sh '/usr/local/bin/docker-compose build' // Updated path for docker-compose
+                    sh '/usr/local/bin/docker-compose build'
                 }
             }
         }
@@ -20,7 +29,7 @@ pipeline {
             steps {
                 script {
                     // Run Docker Compose
-                    sh '/usr/local/bin/docker-compose up -d' // Updated path for docker-compose
+                    sh '/usr/local/bin/docker-compose up -d'
                     
                     // Add your test commands here, for example:
                     sleep(30) // wait for the containers to start
@@ -37,7 +46,7 @@ pipeline {
                         sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
                     }
                     // Tag and push images
-                    sh '/usr/local/bin/docker-compose push' // Updated path for docker-compose
+                    sh '/usr/local/bin/docker-compose push'
                 }
             }
         }
