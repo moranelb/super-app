@@ -23,8 +23,7 @@ pipeline {
                     sh '/usr/local/bin/docker-compose up -d'
                     
                     // Add your test commands here
-                    sleep(20) // wait for the containers to start
-                    sh 'curl -f http://10.0.0.28:3000' // test Node.js app
+                    sleep(10) // wait for the containers to start
                     sh 'curl -f http://10.0.0.28' // test PHP app
                 }
             }
