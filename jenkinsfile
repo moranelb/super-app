@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Build Docker images
-                    sh 'docker-compose build'
+                    sh '/usr/local/bin/docker-compose build' // Updated path for docker-compose
                 }
             }
         }
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     // Run Docker Compose
-                    sh 'docker-compose up -d'
+                    sh '/usr/local/bin/docker-compose up -d' // Updated path for docker-compose
                     
                     // Add your test commands here, for example:
                     sleep(30) // wait for the containers to start
@@ -37,7 +37,7 @@ pipeline {
                         sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
                     }
                     // Tag and push images
-                    sh 'docker-compose push'
+                    sh '/usr/local/bin/docker-compose push' // Updated path for docker-compose
                 }
             }
         }
