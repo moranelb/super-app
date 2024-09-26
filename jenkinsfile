@@ -24,8 +24,8 @@ pipeline {
                     
                     // Add your test commands here
                     sleep(60) // wait for the containers to start
-                    sh 'curl -f http://localhost:3000' // test Node.js app
-                    sh 'curl -f http://localhost' // test PHP app
+                    sh 'curl -f http://10.0.0.28:3000' // test Node.js app
+                    sh 'curl -f http://10.0.0.28' // test PHP app
                 }
             }
         }
