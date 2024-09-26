@@ -5,7 +5,7 @@ pipeline {
     stages {
         stage('Setup Workspace') {
             steps {
-                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                     script {
                         // Print the current working directory for debugging
                         sh 'pwd'
@@ -15,14 +15,14 @@ pipeline {
         }
         stage('Checkout Code') {
             steps {
-                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                     git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
                 }
             }
         }
         stage('Build Docker Images') {
             steps {
-                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                     script {
                         // Build Docker images
                         sh '/usr/local/bin/docker-compose build'
@@ -32,7 +32,7 @@ pipeline {
         }
         stage('Test Application') {
             steps {
-                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                     script {
                         // Run Docker Compose
                         sh '/usr/local/bin/docker-compose up -d'
@@ -47,7 +47,7 @@ pipeline {
         }
         stage('Push to Docker Hub') {
             steps {
-                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                     script {
                         // Log in to Docker Hub
                         withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -63,7 +63,7 @@ pipeline {
     post {
         always {
             // Clean up Docker containers after the pipeline run
-            ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+            ws('/home/vagrant/jenkins-slave/workspace/super-app-pipeline') {
                 script {
                     sh '/usr/local/bin/docker-compose down'
                 }
