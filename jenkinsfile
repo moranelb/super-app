@@ -64,8 +64,9 @@ pipeline {
     post {
         always {
             script {
-                // Clean up Docker containers after the pipeline run
+                // Clean up Docker containers and workspace after the pipeline run
                 sh '/usr/local/bin/docker-compose down'
+                cleanWs()
             }
         }
     }
