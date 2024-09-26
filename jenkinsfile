@@ -1,52 +1,71 @@
 pipeline {
     agent {
         label 'jenkins-docker-slave'
-        customWorkspace '/home/jenkins-slave/workspace/super-app-pipeline'
     }
     stages {
-        stage('Debug Workspace') {
+        stage('Setup Workspace') {
             steps {
-                script {
-                    // Print the current working directory
-                    sh 'pwd'
+                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                    script {
+                        // Print the current working directory for debugging
+                        sh 'pwd'
+                    }
                 }
             }
         }
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
+                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                    git url: 'https://github.com/moranelb/super-app.git', branch: 'main', credentialsId: 'github-creds'
+                }
             }
         }
         stage('Build Docker Images') {
             steps {
-                script {
-                    // Build Docker images
-                    sh '/usr/local/bin/docker-compose build'
+                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                    script {
+                        // Build Docker images
+                        sh '/usr/local/bin/docker-compose build'
+                    }
                 }
             }
         }
         stage('Test Application') {
             steps {
-                script {
-                    // Run Docker Compose
-                    sh '/usr/local/bin/docker-compose up -d'
-                    
-                    // Add your test commands here, for example:
-                    sleep(30) // wait for the containers to start
-                    sh 'curl -f http://localhost:3000' // test Node.js app
-                    sh 'curl -f http://localhost' // test PHP app
+                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                    script {
+                        // Run Docker Compose
+                        sh '/usr/local/bin/docker-compose up -d'
+                        
+                        // Add your test commands here
+                        sleep(30) // wait for the containers to start
+                        sh 'curl -f http://localhost:3000' // test Node.js app
+                        sh 'curl -f http://localhost' // test PHP app
+                    }
                 }
             }
         }
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    // Log in to Docker Hub
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                    script {
+                        // Log in to Docker Hub
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                        }
+                        // Tag and push images
+                        sh '/usr/local/bin/docker-compose push'
                     }
-                    // Tag and push images
-                    sh '/usr/local/bin/docker-compose push'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            // Clean up Docker containers after the pipeline run
+            ws('/home/jenkins-slave/workspace/super-app-pipeline') {
+                script {
+                    sh '/usr/local/bin/docker-compose down'
                 }
             }
         }
